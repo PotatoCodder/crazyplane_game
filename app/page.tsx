@@ -1,6 +1,5 @@
 'use client'
 import { useEffect, useRef, useState } from 'react';
-import plane from '../public/plane.png'
 
 interface Pipe {
   x: number;
@@ -11,33 +10,39 @@ interface Pipe {
 export default function Home() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [running, setRunning] = useState(true);
+  const [score, setScore] = useState(0); // Track the score
+
+  // Create an audio object for the "boom" sound only on the client side
+  let boomSound: HTMLAudioElement | undefined;
+  if (typeof window !== 'undefined') {
+    boomSound = new Audio('/Voicy_allah akbar.mp3'); // Path to your sound file
+  }
 
   useEffect(() => {
     const canvas = canvasRef.current;
-    if (!canvas) return;
-
+    if (!canvas) return; // Add null check for canvas
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
     // Load the plane image
     const planeImage = new Image();
-    planeImage.src = '/plane.png'; // Ensure this matches the file path in your `public` directory
+    planeImage.src = '/plane.png'; // Image path relative to public directory
 
     // Game constants
     const gravity = 0.5;
     const planeJump = -10;
-    const pipeWidth = 35;
+    const pipeWidth = 45;
     const pipeGap = 300;
-    const planeSize = 60;
+    const planeSize = 80; // Increased plane size
 
+    const pipes: Pipe[] = [{ x: canvas.width, y: getRandomPipeY() }];
     let planeY = canvas.height / 2;
     let planeVelocity = 0;
-    let pipes: Pipe[] = [{ x: canvas.width, y: getRandomPipeY() }];
-    let score = 0;
     let isGameOver = false;
 
     // Utility to get random pipe position
     function getRandomPipeY(): number {
+      if (!canvas) return 0; // Ensure canvas is not null
       return Math.random() * (canvas.height - pipeGap - 50) + 25;
     }
 
@@ -52,6 +57,12 @@ export default function Home() {
     // Game loop
     function gameLoop() {
       if (!running) return;
+
+      const canvas = canvasRef.current;
+      if (!canvas) return; // Null check for canvas
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return; // Null check for ctx
+
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
       // Draw plane
@@ -73,12 +84,14 @@ export default function Home() {
           50 + planeSize > pipe.x &&
           (planeY < pipe.y || planeY + planeSize > pipe.y + pipeGap)
         ) {
+          // Play the "boom" sound on collision
+          boomSound?.play();
           isGameOver = true;
         }
 
         // Increment score
         if (pipe.x + pipeWidth < 50 && !pipe.scored) {
-          score += 1;
+          setScore((prevScore) => prevScore + 1); // Update score using setScore
           pipe.scored = true;
         }
       });
@@ -95,6 +108,8 @@ export default function Home() {
 
       // Check for game over
       if (planeY + planeSize > canvas.height || planeY < 0) {
+        // Play the "boom" sound if the plane hits the ground or goes off-screen
+        boomSound?.play();
         isGameOver = true;
       }
 
@@ -118,28 +133,28 @@ export default function Home() {
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [running]);
+  }, [running, score]); // Add score to dependencies
 
   return (
-    <div>
-      <canvas
-        ref={canvasRef}
-        width={800}
-        height={600}
-        style={{ border: '1px solid black', display: 'block', margin: '0 auto' }}
-      ></canvas>
+    <div className="bg-gradient-to-b from-sky-300 to-blue-100 p-5 min-h-screen flex flex-col items-center justify-center">
+      <h1 className="font-sans text-3xl text-gray-800 mb-5 shadow-text">
+        Flappy Plane
+      </h1>
+      <div className="bg-white p-5 rounded-lg shadow-lg">
+        <canvas
+          ref={canvasRef}
+          width={800}
+          height={600}
+          className="border border-gray-300 rounded"
+        ></canvas>
+      </div>
       <button
         onClick={() => {
           setRunning(true);
-          window.location.reload();
+          setScore(0); // Reset score
+          // Reset other necessary state variables
         }}
-        style={{
-          display: 'block',
-          margin: '20px auto',
-          padding: '10px 20px',
-          fontSize: '16px',
-          cursor: 'pointer',
-        }}
+        className="mt-5 px-5 py-2 text-lg bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
       >
         Restart Game
       </button>
