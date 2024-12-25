@@ -138,7 +138,7 @@ export default function Home() {
   return (
     <div className="bg-gradient-to-b from-sky-300 to-blue-100 p-5 min-h-screen flex flex-col items-center justify-center">
       <h1 className="font-sans text-3xl text-gray-800 mb-5 shadow-text">
-        Flappy Plane
+        911 DARK ADRIAN GAME
       </h1>
       <div className="bg-white p-5 rounded-lg shadow-lg">
         <canvas
